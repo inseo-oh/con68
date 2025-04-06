@@ -89,13 +89,6 @@ cpu.onBusRead = (ds) => {
     return val;
 };
 
-// 4892d4
-//
-// 4892da               IR
-//
-// 4892de  209a     
-// 4892e0  0da5
-
 let passCount = 0;
 let failCount = 0;
 let failMismatchCount = 0;
