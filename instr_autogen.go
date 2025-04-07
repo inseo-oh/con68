@@ -1,5 +1,5 @@
 // This file was automatically generated.
-// Generated at 2025-04-07 13:55:55
+// Generated at 2025-04-07 14:11:14
 package main
 
 type instrSwap struct {
@@ -29,6 +29,17 @@ type instrExtW struct {
 type instrExtL struct {
     // Fields
     regY uint8
+    
+}
+
+type instrTrap struct {
+    // Fields
+    vector uint8
+    
+}
+
+type instrTrapV struct {
+    // Fields
     
 }
 
@@ -204,6 +215,52 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
             return
         }else {
             resTemp.regY = v
+        }
+        if !ctx.checkEaModes([]eamode{}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
+    // instrTrap
+    func() {
+        err = nil
+        resTemp := instrTrap{}
+        if (ctx.decodingCtx.ir & 0xfff0) != 0x4e40 {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, ok := ctx.decodeFieldVector(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.vector = v
+        }
+        if !ctx.checkEaModes([]eamode{}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
+    // instrTrapV
+    func() {
+        err = nil
+        resTemp := instrTrapV{}
+        if (ctx.decodingCtx.ir & 0xffff) != 0x4e76 {
+            err = excError{exc: excIllegalInstr}
+            return
         }
         if !ctx.checkEaModes([]eamode{}, []eamode{}) {
             err = excError{exc: excIllegalInstr}

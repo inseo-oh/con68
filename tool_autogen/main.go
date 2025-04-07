@@ -18,6 +18,9 @@ var records []record = []record{
 	{"MoveFromUsp", "0100111001101aaa", []*field{fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
 	{"ExtW       ", "0100100010000bbb", []*field{fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
 	{"ExtL       ", "0100100011000bbb", []*field{fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
+	{"Trap       ", "010011100100aaaa", []*field{fieldVector}, xwordNone, eamodeFlagNone, eamodeFlagNone},
+	{"TrapV      ", "0100111001110110", []*field{}, xwordNone, eamodeFlagNone, eamodeFlagNone},
+
 	{"ExgDReg    ", "1100aaa101000ccc", []*field{fieldRegX, fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
 	{"ExgAReg    ", "1100aaa101001ccc", []*field{fieldRegX, fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
 	{"ExgDAReg   ", "1100aaa110001ccc", []*field{fieldRegX, fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},

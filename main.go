@@ -2087,6 +2087,25 @@ func (instr instrRte) exec(ctx *clientContext) error {
 // Instructions: Misc
 // ==============================================================================
 
+// TRAP
+func (instr instrTrap) disasm() string {
+	return fmt.Sprintf("trap #%d", instr.vector)
+}
+func (instr instrTrap) exec(ctx *clientContext) error {
+	return ctx.beginExc(excError{exc: excTrapVectorStart + exc(instr.vector)})
+}
+
+// TRAPV
+func (instr instrTrapV) disasm() string {
+	return "trapv"
+}
+func (instr instrTrapV) exec(ctx *clientContext) error {
+	if !ctx.ccrV {
+		return nil
+	}
+	return ctx.beginExc(excError{exc: excTrapv})
+}
+
 // EXT.w
 func (instr instrExtW) disasm() string {
 	return fmt.Sprintf("ext.w d%d", instr.regY)
