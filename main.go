@@ -2054,14 +2054,21 @@ func (instr instrRte) disasm() string {
 	return "rte"
 }
 func (instr instrRte) exec(ctx *clientContext) error {
+	if !ctx.srS {
+		return excError{exc: excPrivilegeViolation}
+	}
+	newSr := uint16(0)
 	if v, err := ctx.popW(); err != nil {
 		return err
 	} else {
-		ctx.writeSr(v)
+		// Note that we don't update SR yet, so that we don't switch to USP stack before we are done.
+		newSr = v
 	}
 	if v, err := ctx.popL(); err != nil {
 		return err
 	} else {
+		ctx.lastWasReturnInstr = true
+		ctx.writeSr(newSr)
 		ctx.pc = v
 	}
 	return nil
