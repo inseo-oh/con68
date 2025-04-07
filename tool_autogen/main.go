@@ -13,7 +13,10 @@ import (
 // They are only there for the source code formatting.
 var records []record = []record{
 	// Misc --------------------------------------------------------------------
-	{"Swap", "0100100001000aaa", []*field{fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
+	{"Swap    ", "0100100001000aaa", []*field{fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
+	{"ExgDReg ", "1100aaa101000ccc", []*field{fieldRegX, fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
+	{"ExgAReg ", "1100aaa101001ccc", []*field{fieldRegX, fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
+	{"ExgDAReg", "1100aaa110001ccc", []*field{fieldRegX, fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
 
 	// Misc(Without any fields) ------------------------------------------------
 	{"Illegal", "0100101011111100", []*field{}, xwordNone, eamodeFlagNone, eamodeFlagNone},

@@ -2078,6 +2078,42 @@ func (instr instrRte) exec(ctx *clientContext) error {
 // Instructions: Misc
 // ==============================================================================
 
+// EXG Dn,Dn
+func (instr instrExgDReg) disasm() string {
+	return fmt.Sprintf("exg d%d, d%d", instr.regY, instr.regX)
+}
+func (instr instrExgDReg) exec(ctx *clientContext) error {
+	x := ctx.readDregL(instr.regX)
+	y := ctx.readDregL(instr.regY)
+	ctx.writeDregL(instr.regX, y)
+	ctx.writeDregL(instr.regY, x)
+	return nil
+}
+
+// EXG An,An
+func (instr instrExgAReg) disasm() string {
+	return fmt.Sprintf("exg a%d, a%d", instr.regY, instr.regX)
+}
+func (instr instrExgAReg) exec(ctx *clientContext) error {
+	x := ctx.readAreg(instr.regX)
+	y := ctx.readAreg(instr.regY)
+	ctx.writeAregL(instr.regX, y)
+	ctx.writeAregL(instr.regY, x)
+	return nil
+}
+
+// EXG Dn,An
+func (instr instrExgDAReg) disasm() string {
+	return fmt.Sprintf("exg d%d, a%d", instr.regY, instr.regX)
+}
+func (instr instrExgDAReg) exec(ctx *clientContext) error {
+	x := ctx.readDregL(instr.regX)
+	y := ctx.readAreg(instr.regY)
+	ctx.writeDregL(instr.regX, y)
+	ctx.writeAregL(instr.regY, x)
+	return nil
+}
+
 // SWAP
 func (instr instrSwap) disasm() string {
 	return fmt.Sprintf("swap d%d", instr.regY)
