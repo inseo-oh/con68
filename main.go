@@ -51,8 +51,10 @@ type decodingContext = struct {
 }
 
 type clientContext struct {
-	decodingCtx    decodingContext
-	lastExecutedIr uint16
+	decodingCtx          decodingContext
+	lastExecutedIr       uint16
+	nextOfLastExecutedPc uint32
+	lastWasReturnInstr   bool
 
 	// Networking --------------------------------------------------------------
 	conn   net.Conn
@@ -1560,39 +1562,49 @@ func (ctx *clientContext) serveNextCmd(logger *log.Logger) error {
 		} else {
 			instrPc := ctx.pc
 			ctx.decodingCtx = decodingContext{}
-			executed, err := func() (bool, error) {
+			executed := false
+			lastWasReturnInstr := ctx.lastWasReturnInstr
+			ctx.lastWasReturnInstr = false
+			nextInstrPc := uint32(0)
+			err := func() error {
 				if v, err := ctx.fetchInstrW(); err != nil {
-					return false, err
+					return err
 				} else {
 					ctx.decodingCtx.ir = v
 				}
 				instr, err := ctx.instrDecode()
 				if err != nil {
-					return false, err
+					return err
 				}
+				nextInstrPc = ctx.pc
 				if ctx.traceExec {
 					disasm := instr.disasm()
 					if err := ctx.eventTraceExec(instrPc, ctx.decodingCtx.ir, disasm); err != nil {
-						return false, err
+						return err
 					}
 				}
-				executed := false
 				if err := instr.exec(ctx); err != nil {
 					if excErr, isExcErr := err.(excError); isExcErr && excErr.exc == excPrivilegeViolation {
 						executed = false
 					}
-					return executed, err
+					return err
 				}
-				return true, nil
+				executed = true
+				return nil
 			}()
 			if !executed {
 				ctx.pc = instrPc
 			} else {
 				ctx.lastExecutedIr = ctx.decodingCtx.ir
+				ctx.nextOfLastExecutedPc = nextInstrPc
 			}
 			if err != nil {
 				if excErr, isExcErr := err.(excError); isExcErr {
 					res := newNetAckResponse(0)
+					if !executed && lastWasReturnInstr && ((excErr.exc == excAddressError) || (excErr.exc == excBusError)) {
+						// If instruction couldn't be fetched due to address or bus error, and the last was return(e.g. RTS), set PC to the next instruction of it, as if return instruction did not set the PC.
+						ctx.pc = ctx.nextOfLastExecutedPc
+					}
 					if err := ctx.beginExc(excErr); err != nil {
 						logger.Printf("beginExc failed with error: %v", err)
 						res = newNetFailResponse()
@@ -2015,6 +2027,7 @@ func (instr instrRts) exec(ctx *clientContext) error {
 		return err
 	} else {
 		ctx.pc = v
+		ctx.lastWasReturnInstr = true
 	}
 	return nil
 }
@@ -2031,6 +2044,7 @@ func (instr instrRtr) exec(ctx *clientContext) error {
 	if v, err := ctx.popL(); err != nil {
 		return err
 	} else {
+		ctx.lastWasReturnInstr = true
 		ctx.pc = v
 	}
 	return nil
