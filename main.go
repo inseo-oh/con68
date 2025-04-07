@@ -2142,6 +2142,15 @@ func (instr instrLea) exec(ctx *clientContext) error {
 	return nil
 }
 
+// PEA
+func (instr instrPea) disasm() string {
+	return fmt.Sprintf("pea %s", instr.ea1.ToString())
+}
+func (instr instrPea) exec(ctx *clientContext) error {
+	addr := ctx.memAddrOfEa(*instr.ea1, opsizeNone)
+	return ctx.pushL(addr)
+}
+
 // LINK
 func (instr instrLink) disasm() string {
 	return fmt.Sprintf("link a%d, #%d", instr.regY, instr.imm16)

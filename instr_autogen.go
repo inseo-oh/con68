@@ -1,5 +1,5 @@
 // This file was automatically generated.
-// Generated at 2025-04-07 16:51:01
+// Generated at 2025-04-07 17:07:57
 package main
 
 type instrBra struct {
@@ -37,6 +37,13 @@ type instrLea struct {
     instrPc uint32
     
     regX uint8
+    ea1 *ea
+    
+}
+
+type instrPea struct {
+    instrPc uint32
+    
     ea1 *ea
     
 }
@@ -308,6 +315,33 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
             return
         }else {
             resTemp.regX = v
+        }
+        if v, ok := ctx.decodeFieldEa1(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.ea1 = v
+        }
+        if !ctx.checkEaModes([]eamode{eamodeAregInd, eamodeAregIndDisp, eamodeAregIndIndex, eamodeAbsW, eamodeAbsL, eamodePcIndDisp, eamodePcIndIndex}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
+    // instrPea
+    func() {
+        err = nil
+        resTemp := instrPea{}
+        resTemp.instrPc = ctx.pc - 2
+        if (ctx.decodingCtx.ir & 0xffc0) != 0x4840 {
+            err = excError{exc: excIllegalInstr}
+            return
         }
         if v, ok := ctx.decodeFieldEa1(); !ok {
             err = excError{exc: excIllegalInstr}

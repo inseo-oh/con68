@@ -20,6 +20,7 @@ var records []record = []record{
 
 	// Misc --------------------------------------------------------------------
 	{"Lea        ", "0100aaa111bbbbbb", []*field{fieldRegX, fieldEa1}, nil, eamodeFlagCtrl, eamodeFlagNone},
+	{"Pea        ", "0100100001aaaaaa", []*field{fieldEa1}, nil, eamodeFlagCtrl, eamodeFlagNone},
 	{"Link       ", "0100111001010aaa", []*field{fieldRegY}, xwordImm16, eamodeFlagNone, eamodeFlagNone},
 	{"Unlk       ", "0100111001011aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
 	{"Swap       ", "0100100001000aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
