@@ -12,6 +12,11 @@ import (
 // Note that spaces in the instruction name are ignored.
 // They are only there for the source code formatting.
 var records []record = []record{
+	// MOVE --------------------------------------------------------------------
+	{"MoveB", "0001bbbbbbcccccc", []*field{fieldEa1, fieldEa2}, nil, eamodeFlagAll, eamodeFlagData & eamodeFlagAlter},
+	// {"MoveW", "0011bbbbbbcccccc", []*field{fieldEa1, fieldEa2}, nil, eamodeFlagAll, eamodeFlagData & eamodeFlagAlter},
+	// {"MoveL", "0010bbbbbbcccccc", []*field{fieldEa1, fieldEa2}, nil, eamodeFlagAll, eamodeFlagData & eamodeFlagAlter},
+
 	// Branch ------------------------------------------------------------------
 	{"Bra ", "01100000bbbbbbbb", []*field{}, xwordBranchOff, eamodeFlagNone, eamodeFlagNone},
 	{"Bsr ", "01100001bbbbbbbb", []*field{}, xwordBranchOff, eamodeFlagNone, eamodeFlagNone},

@@ -505,7 +505,7 @@ func (ctx *clientContext) readEa(ea ea, size opsize) (uint32, error) {
 		return ctx.readAreg(ea.reg()), nil
 	case eamodeImm:
 		return ea.imm(), nil
-	case eamodeAregInd, eamodeAregIndPostinc, eamodeAregIndPredec, eamodeAregIndDisp, eamodeAregIndIndex, eamodeAbsW, eamodeAbsL:
+	case eamodeAregInd, eamodeAregIndPostinc, eamodeAregIndPredec, eamodeAregIndDisp, eamodeAregIndIndex, eamodeAbsW, eamodeAbsL, eamodePcIndDisp, eamodePcIndIndex:
 		addr := ctx.memAddrOfEa(ea, size)
 		fc := ctx.getFuncCode(false)
 		return ctx.readMem(addr, fc, size)
@@ -1981,6 +1981,29 @@ func signExtendBToL(v uint8) uint32 {
 //==============================================================================
 // Below are instruction implementations
 //==============================================================================
+
+// ==============================================================================
+// Instructions: Data movement
+// ==============================================================================
+
+// MOVE.b
+func (instr instrMoveB) disasm() string {
+	return fmt.Sprintf("move.b %s %s", instr.ea1.ToString(), instr.ea2.ToString())
+}
+func (instr instrMoveB) exec(ctx *clientContext) error {
+	src := uint8(0)
+	if v, err := ctx.readEa(*instr.ea1, opsizeByte); err != nil {
+		return err
+	} else {
+		src = uint8(v)
+	}
+	if err := ctx.writeEa(*instr.ea2, opsizeByte, uint32(src)); err != nil {
+		return err
+	}
+	ctx.setNZFlagsB(src)
+	ctx.clearVCFlags()
+	return nil
+}
 
 // ==============================================================================
 // Instructions: Branching

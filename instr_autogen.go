@@ -1,6 +1,14 @@
 // This file was automatically generated.
-// Generated at 2025-04-07 17:10:38
+// Generated at 2025-04-07 17:54:23
 package main
+
+type instrMoveB struct {
+    instrPc uint32
+    
+    ea1 *ea
+    ea2 *ea
+    
+}
 
 type instrBra struct {
     instrPc uint32
@@ -189,6 +197,39 @@ type instrRte struct {
 // Decoder function
 //==========================================================================
 func (ctx *clientContext) instrDecode() (res instr, err error) {
+    // instrMoveB
+    func() {
+        err = nil
+        resTemp := instrMoveB{}
+        resTemp.instrPc = ctx.pc - 2
+        if (ctx.decodingCtx.ir & 0xf000) != 0x1000 {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, ok := ctx.decodeFieldEa1(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.ea1 = v
+        }
+        if v, ok := ctx.decodeFieldEa2(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.ea2 = v
+        }
+        if !ctx.checkEaModes([]eamode{eamodeDreg, eamodeAreg, eamodeAregInd, eamodeAregIndPostinc, eamodeAregIndPredec, eamodeAregIndDisp, eamodeAregIndIndex, eamodeAbsW, eamodeAbsL, eamodePcIndDisp, eamodePcIndIndex, eamodeImm}, []eamode{eamodeDreg, eamodeAregInd, eamodeAregIndPostinc, eamodeAregIndPredec, eamodeAregIndDisp, eamodeAregIndIndex, eamodeAbsW, eamodeAbsL}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
     // instrBra
     func() {
         err = nil
