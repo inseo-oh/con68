@@ -19,6 +19,7 @@ var records []record = []record{
 	{"Dbcc", "0101aaaa11001bbb", []*field{fieldCond, fieldRegY}, xwordImm16, eamodeFlagNone, eamodeFlagNone},
 
 	// Misc --------------------------------------------------------------------
+	{"Lea        ", "0100aaa111bbbbbb", []*field{fieldRegX, fieldEa1}, nil, eamodeFlagCtrl, eamodeFlagNone},
 	{"Link       ", "0100111001010aaa", []*field{fieldRegY}, xwordImm16, eamodeFlagNone, eamodeFlagNone},
 	{"Unlk       ", "0100111001011aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
 	{"Swap       ", "0100100001000aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
@@ -237,8 +238,8 @@ type field struct {
 
 var (
 	fieldCond   *field = &field{"cond", "cond", "Cond"}
-	fieldEa1    *field = &field{"ea", "ea1", "Ea1"}
-	fieldEa2    *field = &field{"ea", "ea2", "Ea2"}
+	fieldEa1    *field = &field{"*ea", "ea1", "Ea1"}
+	fieldEa2    *field = &field{"*ea", "ea2", "Ea2"}
 	fieldRegX   *field = &field{"uint8", "regX", "RegX"}
 	fieldRegY   *field = &field{"uint8", "regY", "RegY"}
 	fieldImm3   *field = &field{"uint8", "imm", "Imm3"}

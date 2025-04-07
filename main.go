@@ -373,29 +373,21 @@ type ea struct {
 
 func (ea ea) reg() uint8 {
 	switch ea.mode {
-	case eamodeDreg:
-	case eamodeAreg:
-	case eamodeAregInd:
-	case eamodeAregIndPostinc:
-	case eamodeAregIndPredec:
-	case eamodeAregIndDisp:
-	case eamodeAregIndIndex:
+	case eamodeDreg, eamodeAreg, eamodeAregInd, eamodeAregIndPostinc, eamodeAregIndPredec, eamodeAregIndDisp, eamodeAregIndIndex:
 		return uint8(ea._val)
 	}
 	panic("called with non-applicable EA mode")
 }
 func (ea ea) absAddr() uint32 {
 	switch ea.mode {
-	case eamodeAbsW:
-	case eamodeAbsL:
+	case eamodeAbsW, eamodeAbsL:
 		return ea._val
 	}
 	panic("called with non-applicable EA mode")
 }
 func (ea ea) pcAddress() uint32 {
 	switch ea.mode {
-	case eamodePcIndDisp:
-	case eamodePcIndIndex:
+	case eamodePcIndDisp, eamodePcIndIndex:
 		return ea._val
 	}
 	panic("called with non-applicable EA mode")
@@ -409,10 +401,7 @@ func (ea ea) imm() uint32 {
 }
 func (ea ea) disp() uint32 {
 	switch ea.mode {
-	case eamodeAregIndDisp:
-	case eamodeAregIndIndex:
-	case eamodePcIndDisp:
-	case eamodePcIndIndex:
+	case eamodeAregIndDisp, eamodeAregIndIndex, eamodePcIndDisp, eamodePcIndIndex:
 		return ea._disp
 	}
 	panic("called with non-applicable EA mode")
@@ -420,25 +409,24 @@ func (ea ea) disp() uint32 {
 func (ea ea) ToString() string {
 	switch ea.mode {
 	case eamodeDreg:
-		return fmt.Sprintf("D%d", ea.reg())
+		return fmt.Sprintf("d%d", ea.reg())
 	case eamodeAreg:
-		return fmt.Sprintf("A%d", ea.reg())
+		return fmt.Sprintf("a%d", ea.reg())
 	case eamodeAregInd:
-		return fmt.Sprintf("(A%d)", ea.reg())
+		return fmt.Sprintf("(a%d)", ea.reg())
 	case eamodeAregIndPostinc:
-		return fmt.Sprintf("(A%d)+", ea.reg())
+		return fmt.Sprintf("(a%d)+", ea.reg())
 	case eamodeAregIndPredec:
-		return fmt.Sprintf("-(A%d)", ea.reg())
+		return fmt.Sprintf("-(a%d)", ea.reg())
 	case eamodeAregIndDisp:
-		return fmt.Sprintf("(%d, A%d)", ea.disp(), ea.reg())
+		return fmt.Sprintf("(%d, a%d)", ea.disp(), ea.reg())
 	case eamodeAregIndIndex:
-		return fmt.Sprintf("(%d, A%d, %v%d)", ea.disp(), ea.reg(), ea.indexRegType, ea.indexReg)
+		return fmt.Sprintf("(%d, a%d, %s%d)", ea.disp(), ea.reg(), ea.indexRegType.ToString(), ea.indexReg)
 	case eamodePcIndDisp:
-		return fmt.Sprintf("(%d, PC)", ea.disp())
+		return fmt.Sprintf("(%d, pc)", ea.disp())
 	case eamodePcIndIndex:
-		return fmt.Sprintf("(%d, PC, %v%d)", ea.disp(), ea.indexRegType, ea.indexReg)
-	case eamodeAbsW:
-	case eamodeAbsL:
+		return fmt.Sprintf("(%d, pc, %s%d)", ea.disp(), ea.indexRegType.ToString(), ea.indexReg)
+	case eamodeAbsW, eamodeAbsL:
 		return fmt.Sprintf("$%08X", ea.absAddr())
 	case eamodeImm:
 		return fmt.Sprintf("#$%08X", ea.imm())
@@ -471,6 +459,7 @@ func (ctx *clientContext) memAddrOfIndexedEa(ea ea) uint32 {
 	case opsizeWord:
 		offset = signExtendWToL(uint16(offset))
 	}
+	offset += ea.disp()
 	return baseAddr + offset
 }
 
@@ -494,17 +483,14 @@ func (ctx *clientContext) memAddrOfEa(ea ea, size opsize) uint32 {
 	case eamodePcIndDisp:
 		disp := ea.disp()
 		return ea.pcAddress() + disp
-	case eamodeAregIndIndex:
-	case eamodePcIndIndex:
+	case eamodeAregIndIndex, eamodePcIndIndex:
 		return ctx.memAddrOfIndexedEa(ea)
-	case eamodeAbsW:
-	case eamodeAbsL:
+	case eamodeAbsW, eamodeAbsL:
 		return ea.absAddr()
-	case eamodeDreg:
-	case eamodeAreg:
-	case eamodeImm:
+	case eamodeDreg, eamodeAreg, eamodeImm:
 		panic("attempted to get memory address of what isn't memory address operand")
 	}
+	fmt.Printf("%d\n", ea.mode)
 	panic("bad eamode")
 }
 
@@ -519,13 +505,7 @@ func (ctx *clientContext) readEa(ea ea, size opsize) (uint32, error) {
 		return ctx.readAreg(ea.reg()), nil
 	case eamodeImm:
 		return ea.imm(), nil
-	case eamodeAregInd:
-	case eamodeAregIndPostinc:
-	case eamodeAregIndPredec:
-	case eamodeAregIndDisp:
-	case eamodeAregIndIndex:
-	case eamodeAbsW:
-	case eamodeAbsL:
+	case eamodeAregInd, eamodeAregIndPostinc, eamodeAregIndPredec, eamodeAregIndDisp, eamodeAregIndIndex, eamodeAbsW, eamodeAbsL:
 		addr := ctx.memAddrOfEa(ea, size)
 		fc := ctx.getFuncCode(false)
 		return ctx.readMem(addr, fc, size)
@@ -543,13 +523,7 @@ func (ctx *clientContext) writeEa(ea ea, size opsize, v uint32) error {
 		return nil
 	case eamodeImm:
 		panic("attempted to write to immediate")
-	case eamodeAregInd:
-	case eamodeAregIndPostinc:
-	case eamodeAregIndPredec:
-	case eamodeAregIndDisp:
-	case eamodeAregIndIndex:
-	case eamodeAbsW:
-	case eamodeAbsL:
+	case eamodeAregInd, eamodeAregIndPostinc, eamodeAregIndPredec, eamodeAregIndDisp, eamodeAregIndIndex, eamodeAbsW, eamodeAbsL:
 		addr := ctx.memAddrOfEa(ea, size)
 		fc := ctx.getFuncCode(false)
 		return ctx.writeMem(addr, fc, size, v)
@@ -574,13 +548,7 @@ func (ctx *clientContext) readModifyWriteEa(ea ea, size opsize, modify func(uint
 		return nil
 	case eamodeImm:
 		panic("attempted to write to immediate")
-	case eamodeAregInd:
-	case eamodeAregIndPostinc:
-	case eamodeAregIndPredec:
-	case eamodeAregIndDisp:
-	case eamodeAregIndIndex:
-	case eamodeAbsW:
-	case eamodeAbsL:
+	case eamodeAregInd, eamodeAregIndPostinc, eamodeAregIndPredec, eamodeAregIndDisp, eamodeAregIndIndex, eamodeAbsW, eamodeAbsL:
 		addr := ctx.memAddrOfEa(ea, size)
 		fc := ctx.getFuncCode(false)
 		v, err := ctx.readMem(addr, fc, size)
@@ -881,7 +849,7 @@ func (ctx *clientContext) checkEaModes(ea1Modes []eamode, ea2Modes []eamode) boo
 	return true
 }
 func (ctx *clientContext) decodeEa() error {
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		isDisp := false
 		isIndex := false
 		dest := ctx.decodingCtx.eaFields[i]
@@ -890,11 +858,7 @@ func (ctx *clientContext) decodeEa() error {
 			continue
 		}
 		switch dest.mode {
-		case eamodeDreg:
-		case eamodeAreg:
-		case eamodeAregInd:
-		case eamodeAregIndPostinc:
-		case eamodeAregIndPredec:
+		case eamodeDreg, eamodeAreg, eamodeAregInd, eamodeAregIndPostinc, eamodeAregIndPredec:
 			dest._val = uint32(regField)
 		case eamodeAregIndDisp:
 			dest._val = uint32(regField)
@@ -2168,9 +2132,19 @@ func (instr instrRte) exec(ctx *clientContext) error {
 // Instructions: Misc
 // ==============================================================================
 
+// LEA
+func (instr instrLea) disasm() string {
+	return fmt.Sprintf("lea %s, a%d", instr.ea1.ToString(), instr.regX)
+}
+func (instr instrLea) exec(ctx *clientContext) error {
+	addr := ctx.memAddrOfEa(*instr.ea1, opsizeNone)
+	ctx.writeAregL(instr.regX, addr)
+	return nil
+}
+
 // LINK
 func (instr instrLink) disasm() string {
-	return fmt.Sprintf("link a%d #%d", instr.regY, instr.imm16)
+	return fmt.Sprintf("link a%d, #%d", instr.regY, instr.imm16)
 }
 func (instr instrLink) exec(ctx *clientContext) error {
 	addr := ctx.readAreg(instr.regY)
