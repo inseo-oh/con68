@@ -1572,6 +1572,12 @@ func (ctx *clientContext) serveNextCmd(logger *log.Logger) error {
 				} else {
 					ctx.decodingCtx.ir = v
 				}
+				if (ctx.decodingCtx.ir >> 12) == 0xa {
+					return excError{exc: excLineA}
+				}
+				if (ctx.decodingCtx.ir >> 12) == 0xf {
+					return excError{exc: excLineF}
+				}
 				instr, err := ctx.instrDecode()
 				if err != nil {
 					return err
