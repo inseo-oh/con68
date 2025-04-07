@@ -2019,6 +2019,89 @@ func signExtendBToL(v uint8) uint32 {
 //==============================================================================
 
 // ==============================================================================
+// Instructions: Branching
+//
+// Note that PC value in branching instructions are always <address of instruction word> + 2.
+// this includes the reported PC when address error occurs.
+// ==============================================================================
+
+// BRA
+func (instr instrBra) disasm() string {
+	addr := instr.instrPc + 2 + instr.branchOff
+	return fmt.Sprintf("bra %#x", addr)
+}
+func (instr instrBra) exec(ctx *clientContext) error {
+	addr := instr.instrPc + 2 + instr.branchOff
+	if (addr & 0x1) != 0 {
+		ctx.pc = instr.instrPc + 2
+		return ctx.memExcError(excAddressError, addr, ctx.getFuncCode(true), busDirRead)
+	}
+	ctx.pc = addr
+	return nil
+}
+
+// BSR
+func (instr instrBsr) disasm() string {
+	addr := instr.instrPc + 2 + instr.branchOff
+	return fmt.Sprintf("bsr %#x", addr)
+}
+func (instr instrBsr) exec(ctx *clientContext) error {
+	if err := ctx.pushL(ctx.pc); err != nil {
+		return err
+	}
+	addr := instr.instrPc + 2 + instr.branchOff
+	if (addr & 0x1) != 0 {
+		// BSR is not like other instructions
+		// when address error occurs, reported PC is at the new address
+		ctx.pc = addr
+		return ctx.memExcError(excAddressError, addr, ctx.getFuncCode(true), busDirRead)
+	}
+	ctx.pc = addr
+	return nil
+}
+
+// Bcc
+func (instr instrBcc) disasm() string {
+	addr := instr.instrPc + 2 + instr.branchOff
+	return fmt.Sprintf("b%s %#x", instr.cond.ToString(), addr)
+}
+func (instr instrBcc) exec(ctx *clientContext) error {
+	if !ctx.testCond(instr.cond) {
+		return nil
+	}
+	addr := instr.instrPc + 2 + instr.branchOff
+	if (addr & 0x1) != 0 {
+		ctx.pc = instr.instrPc + 2
+		return ctx.memExcError(excAddressError, addr, ctx.getFuncCode(true), busDirRead)
+	}
+	ctx.pc = addr
+	return nil
+}
+
+// DBcc
+func (instr instrDbcc) disasm() string {
+	addr := instr.instrPc + 2 + signExtendWToL(instr.imm16)
+	return fmt.Sprintf("db%s D%d %#x", instr.cond.ToString(), instr.regY, addr)
+}
+func (instr instrDbcc) exec(ctx *clientContext) error {
+	if ctx.testCond(instr.cond) {
+		return nil
+	}
+	addr := instr.instrPc + 2 + signExtendWToL(instr.imm16)
+	if (addr & 0x1) != 0 {
+		return ctx.memExcError(excAddressError, addr, ctx.getFuncCode(true), busDirRead)
+	}
+	dn := ctx.readDregW(instr.regY)
+	dn -= 1
+	ctx.writeDregW(instr.regY, dn)
+	if dn == 0xffff {
+		return nil
+	}
+	ctx.pc = addr
+	return nil
+}
+
+// ==============================================================================
 // Instructions: Return series
 // ==============================================================================
 

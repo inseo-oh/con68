@@ -12,6 +12,12 @@ import (
 // Note that spaces in the instruction name are ignored.
 // They are only there for the source code formatting.
 var records []record = []record{
+	// Branch ------------------------------------------------------------------
+	{"Bra ", "01100000bbbbbbbb", []*field{}, xwordBranchOff, eamodeFlagNone, eamodeFlagNone},
+	{"Bsr ", "01100001bbbbbbbb", []*field{}, xwordBranchOff, eamodeFlagNone, eamodeFlagNone},
+	{"Bcc ", "0110aaaabbbbbbbb", []*field{fieldCond}, xwordBranchOff, eamodeFlagNone, eamodeFlagNone},
+	{"Dbcc", "0101aaaa11001bbb", []*field{fieldCond, fieldRegY}, xwordImm16, eamodeFlagNone, eamodeFlagNone},
+
 	// Misc --------------------------------------------------------------------
 	{"Link       ", "0100111001010aaa", []*field{fieldRegY}, xwordImm16, eamodeFlagNone, eamodeFlagNone},
 	{"Unlk       ", "0100111001011aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
@@ -65,7 +71,9 @@ func main() {
 		fmt.Println("Generating struct for:", rec)
 		emitBeginBlock("type %s struct", rec.structName())
 		{
-			emitln("// Fields")
+			emitln("instrPc uint32")
+			emitln("")
+
 			// Output fields ---------------------------------------------------
 			for _, field := range rec.fields {
 				fmt.Println(" - Field:", field)
@@ -117,6 +125,7 @@ func main() {
 		{
 			emitln("err = nil")
 			emitln("resTemp := %s{}", rec.structName())
+			emitln("resTemp.instrPc = ctx.pc - 2")
 
 			// Check the bit pattern -------------------------------------------
 			emitBeginBlock("if (ctx.decodingCtx.ir & %#x) != %#x", fixedMask, fixedValue)
@@ -245,10 +254,10 @@ type xword struct {
 }
 
 var (
-	xwordBranchOff *xword = &xword{"uint32", "branchOff", "Imm16"} // Branch offset
-	xwordImm       *xword = &xword{"uint32", "imm", "Imm"}         // 8/16/32-bit immediate data (Determined based on operation size)
-	xwordImm8      *xword = &xword{"uint8", "imm8", "Imm8"}        // 8-bit immediate data
-	xwordImm16     *xword = &xword{"uint16", "imm16", "Imm16"}     // 16-bit immediate data
+	xwordBranchOff *xword = &xword{"uint32", "branchOff", "BranchOff"} // Branch offset
+	xwordImm       *xword = &xword{"uint32", "imm", "Imm"}             // 8/16/32-bit immediate data (Determined based on operation size)
+	xwordImm8      *xword = &xword{"uint8", "imm8", "Imm8"}            // 8-bit immediate data
+	xwordImm16     *xword = &xword{"uint16", "imm16", "Imm16"}         // 16-bit immediate data
 )
 
 const ()

@@ -1,109 +1,158 @@
 // This file was automatically generated.
-// Generated at 2025-04-07 14:33:00
+// Generated at 2025-04-07 15:43:19
 package main
 
+type instrBra struct {
+    instrPc uint32
+    
+    
+    branchOff uint32
+}
+
+type instrBsr struct {
+    instrPc uint32
+    
+    
+    branchOff uint32
+}
+
+type instrBcc struct {
+    instrPc uint32
+    
+    cond cond
+    
+    branchOff uint32
+}
+
+type instrDbcc struct {
+    instrPc uint32
+    
+    cond cond
+    regY uint8
+    
+    imm16 uint16
+}
+
 type instrLink struct {
-    // Fields
+    instrPc uint32
+    
     regY uint8
     
     imm16 uint16
 }
 
 type instrUnlk struct {
-    // Fields
+    instrPc uint32
+    
     regY uint8
     
 }
 
 type instrSwap struct {
-    // Fields
+    instrPc uint32
+    
     regY uint8
     
 }
 
 type instrMoveToUsp struct {
-    // Fields
+    instrPc uint32
+    
     regY uint8
     
 }
 
 type instrMoveFromUsp struct {
-    // Fields
+    instrPc uint32
+    
     regY uint8
     
 }
 
 type instrExtW struct {
-    // Fields
+    instrPc uint32
+    
     regY uint8
     
 }
 
 type instrExtL struct {
-    // Fields
+    instrPc uint32
+    
     regY uint8
     
 }
 
 type instrTrap struct {
-    // Fields
+    instrPc uint32
+    
     vector uint8
     
 }
 
 type instrTrapV struct {
-    // Fields
+    instrPc uint32
+    
     
 }
 
 type instrExgDReg struct {
-    // Fields
+    instrPc uint32
+    
     regX uint8
     regY uint8
     
 }
 
 type instrExgAReg struct {
-    // Fields
+    instrPc uint32
+    
     regX uint8
     regY uint8
     
 }
 
 type instrExgDAReg struct {
-    // Fields
+    instrPc uint32
+    
     regX uint8
     regY uint8
     
 }
 
 type instrIllegal struct {
-    // Fields
+    instrPc uint32
+    
     
 }
 
 type instrNop struct {
-    // Fields
+    instrPc uint32
+    
     
 }
 
 type instrRts struct {
-    // Fields
+    instrPc uint32
+    
     
 }
 
 type instrRtr struct {
-    // Fields
+    instrPc uint32
+    
     
 }
 
 type instrReset struct {
-    // Fields
+    instrPc uint32
+    
     
 }
 
 type instrRte struct {
-    // Fields
+    instrPc uint32
+    
     
 }
 
@@ -111,10 +160,137 @@ type instrRte struct {
 // Decoder function
 //==========================================================================
 func (ctx *clientContext) instrDecode() (res instr, err error) {
+    // instrBra
+    func() {
+        err = nil
+        resTemp := instrBra{}
+        resTemp.instrPc = ctx.pc - 2
+        if (ctx.decodingCtx.ir & 0xff00) != 0x6000 {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if !ctx.checkEaModes([]eamode{}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, err := ctx.decodeXwordBranchOff(); err != nil {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.branchOff = v
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
+    // instrBsr
+    func() {
+        err = nil
+        resTemp := instrBsr{}
+        resTemp.instrPc = ctx.pc - 2
+        if (ctx.decodingCtx.ir & 0xff00) != 0x6100 {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if !ctx.checkEaModes([]eamode{}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, err := ctx.decodeXwordBranchOff(); err != nil {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.branchOff = v
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
+    // instrBcc
+    func() {
+        err = nil
+        resTemp := instrBcc{}
+        resTemp.instrPc = ctx.pc - 2
+        if (ctx.decodingCtx.ir & 0xf000) != 0x6000 {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, ok := ctx.decodeFieldCond(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.cond = v
+        }
+        if !ctx.checkEaModes([]eamode{}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, err := ctx.decodeXwordBranchOff(); err != nil {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.branchOff = v
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
+    // instrDbcc
+    func() {
+        err = nil
+        resTemp := instrDbcc{}
+        resTemp.instrPc = ctx.pc - 2
+        if (ctx.decodingCtx.ir & 0xf0f8) != 0x50c8 {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, ok := ctx.decodeFieldCond(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.cond = v
+        }
+        if v, ok := ctx.decodeFieldRegY(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.regY = v
+        }
+        if !ctx.checkEaModes([]eamode{}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, err := ctx.decodeXwordImm16(); err != nil {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.imm16 = v
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
     // instrLink
     func() {
         err = nil
         resTemp := instrLink{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xfff8) != 0x4e50 {
             err = excError{exc: excIllegalInstr}
             return
@@ -147,6 +323,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrUnlk{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xfff8) != 0x4e58 {
             err = excError{exc: excIllegalInstr}
             return
@@ -173,6 +350,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrSwap{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xfff8) != 0x4840 {
             err = excError{exc: excIllegalInstr}
             return
@@ -199,6 +377,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrMoveToUsp{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xfff8) != 0x4e60 {
             err = excError{exc: excIllegalInstr}
             return
@@ -225,6 +404,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrMoveFromUsp{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xfff8) != 0x4e68 {
             err = excError{exc: excIllegalInstr}
             return
@@ -251,6 +431,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrExtW{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xfff8) != 0x4880 {
             err = excError{exc: excIllegalInstr}
             return
@@ -277,6 +458,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrExtL{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xfff8) != 0x48c0 {
             err = excError{exc: excIllegalInstr}
             return
@@ -303,6 +485,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrTrap{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xfff0) != 0x4e40 {
             err = excError{exc: excIllegalInstr}
             return
@@ -329,6 +512,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrTrapV{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xffff) != 0x4e76 {
             err = excError{exc: excIllegalInstr}
             return
@@ -349,6 +533,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrExgDReg{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xf1f8) != 0xc140 {
             err = excError{exc: excIllegalInstr}
             return
@@ -381,6 +566,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrExgAReg{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xf1f8) != 0xc148 {
             err = excError{exc: excIllegalInstr}
             return
@@ -413,6 +599,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrExgDAReg{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xf1f8) != 0xc188 {
             err = excError{exc: excIllegalInstr}
             return
@@ -445,6 +632,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrIllegal{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xffff) != 0x4afc {
             err = excError{exc: excIllegalInstr}
             return
@@ -465,6 +653,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrNop{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xffff) != 0x4e71 {
             err = excError{exc: excIllegalInstr}
             return
@@ -485,6 +674,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrRts{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xffff) != 0x4e75 {
             err = excError{exc: excIllegalInstr}
             return
@@ -505,6 +695,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrRtr{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xffff) != 0x4e77 {
             err = excError{exc: excIllegalInstr}
             return
@@ -525,6 +716,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrReset{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xffff) != 0x4e70 {
             err = excError{exc: excIllegalInstr}
             return
@@ -545,6 +737,7 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
     func() {
         err = nil
         resTemp := instrRte{}
+        resTemp.instrPc = ctx.pc - 2
         if (ctx.decodingCtx.ir & 0xffff) != 0x4e73 {
             err = excError{exc: excIllegalInstr}
             return
