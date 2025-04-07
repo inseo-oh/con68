@@ -18,9 +18,11 @@ var records []record = []record{
 	{"Bcc ", "0110aaaabbbbbbbb", []*field{fieldCond}, xwordBranchOff, eamodeFlagNone, eamodeFlagNone},
 	{"Dbcc", "0101aaaa11001bbb", []*field{fieldCond, fieldRegY}, xwordImm16, eamodeFlagNone, eamodeFlagNone},
 
-	// Misc --------------------------------------------------------------------
+	// Misc(0100~) -------------------------------------------------------------
 	{"Lea        ", "0100aaa111bbbbbb", []*field{fieldRegX, fieldEa1}, nil, eamodeFlagCtrl, eamodeFlagNone},
 	{"Pea        ", "0100100001aaaaaa", []*field{fieldEa1}, nil, eamodeFlagCtrl, eamodeFlagNone},
+	{"Jmp        ", "0100111011aaaaaa", []*field{fieldEa1}, nil, eamodeFlagCtrl, eamodeFlagNone},
+	{"Jsr        ", "0100111010aaaaaa", []*field{fieldEa1}, nil, eamodeFlagCtrl, eamodeFlagNone},
 	{"Link       ", "0100111001010aaa", []*field{fieldRegY}, xwordImm16, eamodeFlagNone, eamodeFlagNone},
 	{"Unlk       ", "0100111001011aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
 	{"Swap       ", "0100100001000aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},

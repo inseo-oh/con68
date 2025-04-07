@@ -2151,6 +2151,38 @@ func (instr instrPea) exec(ctx *clientContext) error {
 	return ctx.pushL(addr)
 }
 
+// JMP
+func (instr instrJmp) disasm() string {
+	return fmt.Sprintf("jmp %s", instr.ea1.ToString())
+}
+func (instr instrJmp) exec(ctx *clientContext) error {
+	addr := ctx.memAddrOfEa(*instr.ea1, opsizeNone)
+	if (addr & 0x1) != 0 {
+		// Address error during JMP always seem to push (instruction address + 2),
+		// regardless of addressing mode.
+		ctx.pc = instr.instrPc + 2
+		return ctx.memExcError(excAddressError, addr, ctx.getFuncCode(true), busDirRead)
+	}
+	ctx.pc = addr
+	return nil
+}
+
+// JSR
+func (instr instrJsr) disasm() string {
+	return fmt.Sprintf("jsr %s", instr.ea1.ToString())
+}
+func (instr instrJsr) exec(ctx *clientContext) error {
+	addr := ctx.memAddrOfEa(*instr.ea1, opsizeNone)
+	if (addr & 0x1) != 0 {
+		return ctx.memExcError(excAddressError, addr, ctx.getFuncCode(true), busDirRead)
+	}
+	if err := ctx.pushL(ctx.pc); err != nil {
+		return err
+	}
+	ctx.pc = addr
+	return nil
+}
+
 // LINK
 func (instr instrLink) disasm() string {
 	return fmt.Sprintf("link a%d, #%d", instr.regY, instr.imm16)
