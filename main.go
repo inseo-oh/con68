@@ -2078,6 +2078,30 @@ func (instr instrRte) exec(ctx *clientContext) error {
 // Instructions: Misc
 // ==============================================================================
 
+// MOVE An, USP
+func (instr instrMoveToUsp) disasm() string {
+	return fmt.Sprintf("move a%d, usp", instr.regY)
+}
+func (instr instrMoveToUsp) exec(ctx *clientContext) error {
+	if !ctx.srS {
+		return excError{exc: excPrivilegeViolation}
+	}
+	ctx.a7usp = ctx.readAreg(instr.regY)
+	return nil
+}
+
+// MOVE USP, An
+func (instr instrMoveFromUsp) disasm() string {
+	return fmt.Sprintf("move usp, a%d", instr.regY)
+}
+func (instr instrMoveFromUsp) exec(ctx *clientContext) error {
+	if !ctx.srS {
+		return excError{exc: excPrivilegeViolation}
+	}
+	ctx.writeAregL(instr.regY, ctx.a7usp)
+	return nil
+}
+
 // EXG Dn,Dn
 func (instr instrExgDReg) disasm() string {
 	return fmt.Sprintf("exg d%d, d%d", instr.regY, instr.regX)

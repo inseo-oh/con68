@@ -1,8 +1,20 @@
 // This file was automatically generated.
-// Generated at 2025-04-07 13:38:15
+// Generated at 2025-04-07 13:44:41
 package main
 
 type instrSwap struct {
+    // Fields
+    regY uint8
+    
+}
+
+type instrMoveToUsp struct {
+    // Fields
+    regY uint8
+    
+}
+
+type instrMoveFromUsp struct {
     // Fields
     regY uint8
     
@@ -68,6 +80,58 @@ func (ctx *clientContext) instrDecode() (res instr, err error) {
         err = nil
         resTemp := instrSwap{}
         if (ctx.decodingCtx.ir & 0xfff8) != 0x4840 {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, ok := ctx.decodeFieldRegY(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.regY = v
+        }
+        if !ctx.checkEaModes([]eamode{}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
+    // instrMoveToUsp
+    func() {
+        err = nil
+        resTemp := instrMoveToUsp{}
+        if (ctx.decodingCtx.ir & 0xfff8) != 0x4e60 {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, ok := ctx.decodeFieldRegY(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.regY = v
+        }
+        if !ctx.checkEaModes([]eamode{}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
+    // instrMoveFromUsp
+    func() {
+        err = nil
+        resTemp := instrMoveFromUsp{}
+        if (ctx.decodingCtx.ir & 0xfff8) != 0x4e68 {
             err = excError{exc: excIllegalInstr}
             return
         }
