@@ -51,10 +51,8 @@ type decodingContext = struct {
 }
 
 type clientContext struct {
-	decodingCtx          decodingContext
-	lastExecutedIr       uint16
-	nextOfLastExecutedPc uint32
-	lastWasReturnInstr   bool
+	decodingCtx    decodingContext
+	lastExecutedIr uint16
 
 	// Networking --------------------------------------------------------------
 	conn   net.Conn
@@ -1095,7 +1093,7 @@ func (ctx *clientContext) memExcError(exc exc, addr uint32, fc fc, dir busDir) e
 	}
 	return excError{
 		exc:         exc,
-		ir:          ctx.lastExecutedIr,
+		ir:          ctx.decodingCtx.ir,
 		memExcFlags: flags,
 		memExcAddr:  addr,
 	}
@@ -1124,6 +1122,9 @@ func (ctx *clientContext) beginExc(err excError) error {
 			if excErr, isExcErr := err.(excError); isExcErr {
 				if (excErr.exc == excAddressError) && (currentErr.exc == excAddressError) {
 					// Double address error
+					if err := ctx.eventTraceExcMem(excErr.exc, ctx.pc, excErr.ir, excErr.memExcAddr, excErr.memExcFlags); err != nil {
+						return err
+					}
 					return err
 				} else {
 					// Begin new exception
@@ -1563,9 +1564,6 @@ func (ctx *clientContext) serveNextCmd(logger *log.Logger) error {
 			instrPc := ctx.pc
 			ctx.decodingCtx = decodingContext{}
 			executed := false
-			lastWasReturnInstr := ctx.lastWasReturnInstr
-			ctx.lastWasReturnInstr = false
-			nextInstrPc := uint32(0)
 			err := func() error {
 				if v, err := ctx.fetchInstrW(); err != nil {
 					return err
@@ -1582,7 +1580,6 @@ func (ctx *clientContext) serveNextCmd(logger *log.Logger) error {
 				if err != nil {
 					return err
 				}
-				nextInstrPc = ctx.pc
 				if ctx.traceExec {
 					disasm := instr.disasm()
 					if err := ctx.eventTraceExec(instrPc, ctx.decodingCtx.ir, disasm); err != nil {
@@ -1592,6 +1589,8 @@ func (ctx *clientContext) serveNextCmd(logger *log.Logger) error {
 				if err := instr.exec(ctx); err != nil {
 					if excErr, isExcErr := err.(excError); isExcErr && excErr.exc == excPrivilegeViolation {
 						executed = false
+					} else {
+						executed = true
 					}
 					return err
 				}
@@ -1602,15 +1601,10 @@ func (ctx *clientContext) serveNextCmd(logger *log.Logger) error {
 				ctx.pc = instrPc
 			} else {
 				ctx.lastExecutedIr = ctx.decodingCtx.ir
-				ctx.nextOfLastExecutedPc = nextInstrPc
 			}
 			if err != nil {
 				if excErr, isExcErr := err.(excError); isExcErr {
 					res := newNetAckResponse(0)
-					if !executed && lastWasReturnInstr && ((excErr.exc == excAddressError) || (excErr.exc == excBusError)) {
-						// If instruction couldn't be fetched due to address or bus error, and the last was return(e.g. RTS), set PC to the next instruction of it, as if return instruction did not set the PC.
-						ctx.pc = ctx.nextOfLastExecutedPc
-					}
 					if err := ctx.beginExc(excErr); err != nil {
 						logger.Printf("beginExc failed with error: %v", err)
 						res = newNetFailResponse()
@@ -2034,9 +2028,10 @@ func (instr instrRts) disasm() string {
 func (instr instrRts) exec(ctx *clientContext) error {
 	if v, err := ctx.popL(); err != nil {
 		return err
+	} else if (v & 0x1) != 0 {
+		return ctx.memExcError(excAddressError, v, ctx.getFuncCode(true), busDirRead)
 	} else {
 		ctx.pc = v
-		ctx.lastWasReturnInstr = true
 	}
 	return nil
 }
@@ -2052,8 +2047,9 @@ func (instr instrRtr) exec(ctx *clientContext) error {
 	}
 	if v, err := ctx.popL(); err != nil {
 		return err
+	} else if (v & 0x1) != 0 {
+		return ctx.memExcError(excAddressError, v, ctx.getFuncCode(true), busDirRead)
 	} else {
-		ctx.lastWasReturnInstr = true
 		ctx.pc = v
 	}
 	return nil
@@ -2075,8 +2071,10 @@ func (instr instrRte) exec(ctx *clientContext) error {
 	}
 	if v, err := ctx.popL(); err != nil {
 		return err
+	} else if (v & 0x1) != 0 {
+		ctx.writeSr(newSr)
+		return ctx.memExcError(excAddressError, v, ctx.getFuncCode(true), busDirRead)
 	} else {
-		ctx.lastWasReturnInstr = true
 		ctx.writeSr(newSr)
 		ctx.pc = v
 	}
@@ -2086,6 +2084,42 @@ func (instr instrRte) exec(ctx *clientContext) error {
 // ==============================================================================
 // Instructions: Misc
 // ==============================================================================
+
+// LINK
+func (instr instrLink) disasm() string {
+	return fmt.Sprintf("link a%d #%d", instr.regY, instr.imm16)
+}
+func (instr instrLink) exec(ctx *clientContext) error {
+	addr := ctx.readAreg(instr.regY)
+	if err := ctx.pushL(addr); err != nil {
+		return err
+	}
+	sp := ctx.readAreg(7)
+	ctx.writeAregL(instr.regY, sp)
+	sp += signExtendWToL(instr.imm16)
+	ctx.writeAregL(7, sp)
+	return nil
+}
+
+// UNLK
+func (instr instrUnlk) disasm() string {
+	return fmt.Sprintf("unlk a%d", instr.regY)
+}
+func (instr instrUnlk) exec(ctx *clientContext) error {
+	sp := ctx.readAreg(instr.regY)
+	if (sp & 0x1) != 0 {
+		// XXX: For some reason, UNLK test expects PC+2 instead of PC? huh...?
+		ctx.pc += 2
+		return ctx.memExcError(excAddressError, sp, ctx.getFuncCode(false), busDirRead)
+	}
+	ctx.writeAregL(7, sp)
+	if v, err := ctx.popL(); err != nil {
+		return err
+	} else {
+		ctx.writeAregL(instr.regY, v)
+	}
+	return nil
+}
 
 // TRAP
 func (instr instrTrap) disasm() string {

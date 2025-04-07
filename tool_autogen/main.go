@@ -13,25 +13,27 @@ import (
 // They are only there for the source code formatting.
 var records []record = []record{
 	// Misc --------------------------------------------------------------------
-	{"Swap       ", "0100100001000aaa", []*field{fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"MoveToUsp  ", "0100111001100aaa", []*field{fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"MoveFromUsp", "0100111001101aaa", []*field{fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"ExtW       ", "0100100010000bbb", []*field{fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"ExtL       ", "0100100011000bbb", []*field{fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"Trap       ", "010011100100aaaa", []*field{fieldVector}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"TrapV      ", "0100111001110110", []*field{}, xwordNone, eamodeFlagNone, eamodeFlagNone},
+	{"Link       ", "0100111001010aaa", []*field{fieldRegY}, xwordImm16, eamodeFlagNone, eamodeFlagNone},
+	{"Unlk       ", "0100111001011aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"Swap       ", "0100100001000aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"MoveToUsp  ", "0100111001100aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"MoveFromUsp", "0100111001101aaa", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"ExtW       ", "0100100010000bbb", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"ExtL       ", "0100100011000bbb", []*field{fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"Trap       ", "010011100100aaaa", []*field{fieldVector}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"TrapV      ", "0100111001110110", []*field{}, nil, eamodeFlagNone, eamodeFlagNone},
 
-	{"ExgDReg    ", "1100aaa101000ccc", []*field{fieldRegX, fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"ExgAReg    ", "1100aaa101001ccc", []*field{fieldRegX, fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"ExgDAReg   ", "1100aaa110001ccc", []*field{fieldRegX, fieldRegY}, xwordNone, eamodeFlagNone, eamodeFlagNone},
+	{"ExgDReg    ", "1100aaa101000ccc", []*field{fieldRegX, fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"ExgAReg    ", "1100aaa101001ccc", []*field{fieldRegX, fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"ExgDAReg   ", "1100aaa110001ccc", []*field{fieldRegX, fieldRegY}, nil, eamodeFlagNone, eamodeFlagNone},
 
 	// Misc(Without any fields) ------------------------------------------------
-	{"Illegal", "0100101011111100", []*field{}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"Nop    ", "0100111001110001", []*field{}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"Rts    ", "0100111001110101", []*field{}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"Rtr    ", "0100111001110111", []*field{}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"Reset  ", "0100111001110000", []*field{}, xwordNone, eamodeFlagNone, eamodeFlagNone},
-	{"Rte    ", "0100111001110011", []*field{}, xwordNone, eamodeFlagNone, eamodeFlagNone},
+	{"Illegal", "0100101011111100", []*field{}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"Nop    ", "0100111001110001", []*field{}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"Rts    ", "0100111001110101", []*field{}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"Rtr    ", "0100111001110111", []*field{}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"Reset  ", "0100111001110000", []*field{}, nil, eamodeFlagNone, eamodeFlagNone},
+	{"Rte    ", "0100111001110011", []*field{}, nil, eamodeFlagNone, eamodeFlagNone},
 }
 
 func main() {
@@ -72,8 +74,9 @@ func main() {
 			emitln("")
 
 			// Output extension words ------------------------------------------
-			if rec.xword != xwordNone {
-				panic("todo")
+			if rec.xword != nil {
+				fmt.Println(" - Xword:", rec.xword)
+				emitln("%s %s", rec.xword.fieldName, rec.xword.typeName)
 			}
 		}
 
@@ -159,8 +162,18 @@ func main() {
 			emitEndBlock("")
 
 			// Call extension word decoder -------------------------------------
-			if rec.xword != xwordNone {
-				panic("todo")
+			if rec.xword != nil {
+				fmt.Println(" - Xword:", rec.xword)
+				emitBeginBlock("if v, err := ctx.decodeXword%s(); err != nil", rec.xword.decoderName)
+				{
+					emitln("err = excError{exc: excIllegalInstr}")
+					emitln("return")
+				}
+				emitEndBeginBlock("else")
+				{
+					emitln("resTemp.%s = v", rec.xword.fieldName)
+				}
+				emitEndBlock("")
 			}
 
 			// Call EA decoder -------------------------------------------------
@@ -196,7 +209,7 @@ type record struct {
 	name   string     // Instruction name
 	bits   string     // Instruction bit pattern. 0/1 are fixed bits, others are for fields
 	fields []*field   // Instruction fields
-	xword  xword      // Extension word type
+	xword  *xword     // Extension word type (nil if not present)
 	ea1    eamodeFlag // Effective address mode 1
 	ea2    eamodeFlag // Effective address mode 2 (if present)
 }
@@ -224,16 +237,21 @@ var (
 	fieldVector *field = &field{"uint8", "vector", "Vector"}
 )
 
-// Instruction extension word type
-type xword uint8
+// Instruction extension word
+type xword struct {
+	typeName    string
+	fieldName   string
+	decoderName string
+}
 
-const (
-	xwordNone      = xword(iota) // No extension word
-	xwordBranchOff               // Branch offset
-	xwordImm                     // 8/16/32-bit immediate data (Determined based on operation size)
-	xwordImm8                    // 8-bit immediate data
-	xwordImm16                   // 16-bit immediate data
+var (
+	xwordBranchOff *xword = &xword{"uint32", "branchOff", "Imm16"} // Branch offset
+	xwordImm       *xword = &xword{"uint32", "imm", "Imm"}         // 8/16/32-bit immediate data (Determined based on operation size)
+	xwordImm8      *xword = &xword{"uint8", "imm8", "Imm8"}        // 8-bit immediate data
+	xwordImm16     *xword = &xword{"uint16", "imm16", "Imm16"}     // 16-bit immediate data
 )
+
+const ()
 
 // Effective addressing modes
 type eamodeFlag uint16
@@ -387,6 +405,7 @@ func emitEndBlock(format string, args ...any) {
 }
 func emitEndBeginBlock(format string, args ...any) {
 	indent -= sourceIndent
+	// FIXME: Add space beteen the code and }
 	writeStrings([]string{strings.Repeat(" ", indent), "}", fmt.Sprintf(format, args...), " {\n"})
 	indent += sourceIndent
 }

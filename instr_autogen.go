@@ -1,6 +1,19 @@
 // This file was automatically generated.
-// Generated at 2025-04-07 14:11:14
+// Generated at 2025-04-07 14:33:00
 package main
+
+type instrLink struct {
+    // Fields
+    regY uint8
+    
+    imm16 uint16
+}
+
+type instrUnlk struct {
+    // Fields
+    regY uint8
+    
+}
 
 type instrSwap struct {
     // Fields
@@ -98,6 +111,64 @@ type instrRte struct {
 // Decoder function
 //==========================================================================
 func (ctx *clientContext) instrDecode() (res instr, err error) {
+    // instrLink
+    func() {
+        err = nil
+        resTemp := instrLink{}
+        if (ctx.decodingCtx.ir & 0xfff8) != 0x4e50 {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, ok := ctx.decodeFieldRegY(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.regY = v
+        }
+        if !ctx.checkEaModes([]eamode{}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, err := ctx.decodeXwordImm16(); err != nil {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.imm16 = v
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
+    // instrUnlk
+    func() {
+        err = nil
+        resTemp := instrUnlk{}
+        if (ctx.decodingCtx.ir & 0xfff8) != 0x4e58 {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if v, ok := ctx.decodeFieldRegY(); !ok {
+            err = excError{exc: excIllegalInstr}
+            return
+        }else {
+            resTemp.regY = v
+        }
+        if !ctx.checkEaModes([]eamode{}, []eamode{}) {
+            err = excError{exc: excIllegalInstr}
+            return
+        }
+        if err = ctx.decodeEa(); err != nil {
+            return
+        }
+        res = resTemp
+    }()
+    if excErr, isExcErr := err.(excError); !isExcErr || (isExcErr && (excErr.exc != excIllegalInstr)) {
+        return
+    }
     // instrSwap
     func() {
         err = nil
