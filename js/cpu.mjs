@@ -317,6 +317,7 @@ export default class CPUClient {
             throw TypeError(`${e} is not a valid opbyte`);
         }
         this.#client.write(new Uint8Array(cmd));
+        this.#sentBytesSum += cmd.length;
         return new Promise((resolve, reject) => {
             let o = [
                 (status, data) => {
