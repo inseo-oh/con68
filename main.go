@@ -209,10 +209,10 @@ func (ctx *clientContext) writeDregL(reg uint8, v uint32) {
 	ctx.dataRegs[reg] = v
 }
 func (ctx *clientContext) writeDregW(reg uint8, v uint16) {
-	ctx.dataRegs[reg] = ctx.dataRegs[reg] & ^uint32(0xffff) | (uint32(v) & ^uint32(0xffff))
+	ctx.dataRegs[reg] = ctx.dataRegs[reg] & ^uint32(0xffff) | (uint32(v) & uint32(0xffff))
 }
 func (ctx *clientContext) writeDregB(reg uint8, v uint8) {
-	ctx.dataRegs[reg] = ctx.dataRegs[reg] & ^uint32(0xff) | (uint32(v) & ^uint32(0xff))
+	ctx.dataRegs[reg] = ctx.dataRegs[reg] & ^uint32(0xff) | (uint32(v) & uint32(0xff))
 }
 func (ctx *clientContext) writeDreg(reg uint8, size opsize, v uint32) {
 	switch size {
@@ -2007,6 +2007,9 @@ func (t regType) ToString() string {
 func signExtendWToL(v uint16) uint32 {
 	return uint32(int32(int16(v)))
 }
+func signExtendBToW(v uint8) uint16 {
+	return uint16(int16(int8(v)))
+}
 func signExtendBToL(v uint8) uint32 {
 	return uint32(int32(int8(v)))
 }
@@ -2077,6 +2080,32 @@ func (instr instrRte) exec(ctx *clientContext) error {
 // ==============================================================================
 // Instructions: Misc
 // ==============================================================================
+
+// EXT.w
+func (instr instrExtW) disasm() string {
+	return fmt.Sprintf("ext.w d%d", instr.regY)
+}
+func (instr instrExtW) exec(ctx *clientContext) error {
+	val8 := ctx.readDregB(instr.regY)
+	val16 := signExtendBToW(val8)
+	ctx.writeDregW(instr.regY, val16)
+	ctx.setNZFlagsW(val16)
+	ctx.clearVCFlags()
+	return nil
+}
+
+// EXT.l
+func (instr instrExtL) disasm() string {
+	return fmt.Sprintf("ext.l d%d", instr.regY)
+}
+func (instr instrExtL) exec(ctx *clientContext) error {
+	val16 := ctx.readDregW(instr.regY)
+	val32 := signExtendWToL(val16)
+	ctx.writeDregL(instr.regY, val32)
+	ctx.setNZFlagsL(val32)
+	ctx.clearVCFlags()
+	return nil
+}
 
 // MOVE An, USP
 func (instr instrMoveToUsp) disasm() string {
